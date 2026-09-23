@@ -14,17 +14,16 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: "17" }
       - name: Request the OIDC token
         id: token
-        run: |
-          AUDIENCE="https://maven.example.com"   # must match config audiences
-          curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-               -d "audience=$AUDIENCE" \
-               "$ACTIONS_ID_TOKEN_REQUEST_URL?audience=$(python3 -c "import urllib.parse;print(urllib.parse.quote('$AUDIENCE'))")" \
-               > /tmp/oidc.token
+        uses: actions/github-script@v9
+        with:
+          script: |
+            // audience must match config audiences
+            core.setOutput('oidc', await core.getIDToken('https://maven.example.com'))
       - run: mvn -B deploy   # with the token attached, see below
 ```
 
@@ -65,7 +64,7 @@ options:
    ```
 
    ```sh
-   export PIER_TOKEN=$(cat /tmp/oidc.token)
+   export PIER_TOKEN="${{ steps.token.outputs.oidc }}"
    mvn -B -s settings.xml deploy:deploy-file \
      -Dfile=target/myapp.jar -DpomFile=pom.xml \
      -DgroupId=com.example -DartifactId=myapp -Dversion=1.2.3 \
