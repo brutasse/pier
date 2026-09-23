@@ -26,9 +26,9 @@ The namespace is split by `reserved_groups`:
 ```yaml
 upstream:
   - name: central
-    url: https://repo1.maven.org/maven2
+    url: https://repo.maven.apache.org/maven2/
   - name: clojars
-    url: https://repo.clojars.org/repository/releases
+    url: https://repo.clojars.org/
 reserved_groups:
   - com.acme
 ```
