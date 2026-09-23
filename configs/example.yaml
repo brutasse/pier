@@ -1,0 +1,113 @@
+# Pier configuration.
+#
+# S3 credentials are NOT configured here: the service uses the standard
+# AWS SDK credential chain (environment variables, shared config file,
+# instance profile).
+listen: ":8080"
+
+s3:
+  bucket: pier-mycorp
+  # All repository objects live under this prefix in the bucket.
+  prefix: maven
+  # region: ch-gva-2
+  # Custom S3 endpoint (Exoscale Object Storage, ...).
+  # Leave empty for AWS. A scheme-less URL defaults to https.
+  # endpoint: https://sos-ch-gva-2.exo.io
+  # Path-style URLs; defaults to true when endpoint is set, false otherwise.
+  # force_path_style: true
+
+# Re-publishing a non-SNAPSHOT GAV is rejected (409). Default true.
+immutable_releases: true
+
+# Maximum upload size in bytes. Default 536870912 (512 MiB).
+# max_upload_bytes: 536870912
+
+# Pull-through cache: upstream Maven repositories, tried in order.
+# The first upstream that returns 200 for a path wins. Leave the list
+# empty (or omit it) to run as a plain private repository.
+# upstream:
+#   - name: central
+#     url: https://repo.maven.apache.org/maven2/
+#   - name: clojars
+#     url: https://repo.clojars.org/
+#   # Upstreams behind basic auth: the username is literal; the
+#   # password is the name of an environment variable holding it.
+#   # Set both together, or neither (public repository).
+#   - name: artifactory
+#     url: https://artifactory.example.com/artifactory/libs-release
+#     username: puller
+#     password: PIER_UPSTREAM_PASSWORD
+
+# Maximum size in bytes of objects pulled from upstream repositories.
+# Independent from max_upload_bytes. Default 536870912 (512 MiB).
+# max_pull_bytes: 536870912
+
+# Groups reserved for internal uploads. Paths under a reserved group
+# (dot-boundary prefix match) are never pulled from upstream; all other
+# paths are read-only (PUT/POST there is rejected with 403). List every
+# group you deploy; anything missing from the list cannot be uploaded.
+reserved_groups:
+  - com.example
+
+# Freshness window for maven-metadata.xml objects pulled from upstream.
+# Once expired, the next GET revalidates the metadata from the upstream
+# (falling back to the stale copy if the revalidation fails). Applies to
+# pulled metadata only, never to artifacts. Default 24h; 0s disables
+# revalidation (cache-forever).
+# metadata_ttl: 24h
+
+auth:
+  # NEVER set disabled: true in production. It bypasses all
+  # authentication and authorization; it exists for local development.
+  # disabled: false
+  issuers:
+    # GitHub Actions OIDC tokens (trusted publishing).
+    - name: github
+      well_known: https://actions.githubusercontent.com/.well-known/openid-configuration
+      expected_iss: https://token.actions.githubusercontent.com
+      # Workflows must request this audience:
+      #   curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+      #        -d audience="https://maven.example.com" \
+      #        "$ACTIONS_ID_TOKEN_REQUEST_URL?audience=https%3A%2F%2Fmaven.example.com"
+      audiences:
+        - "https://maven.example.com"
+    # An external IdP for individually-acquired tokens (Authentik,
+    # Keycloak, ...). Tokens must request one of the audiences below.
+    - name: my-idp
+      well_known: https://id.example.com/.well-known/openid-configuration
+      expected_iss: https://id.example.com
+      audiences:
+        - "pier"
+
+policy:
+  # Deny anything no rule allows. Default true.
+  default_deny: true
+  # Rules are evaluated in order; the first match allows the request.
+  #
+  # Variables:
+  #   claims   map of the verified token's claims (iss, sub, aud, ...
+  #             plus issuer-specific ones such as repository, repository_owner)
+  #   action   "download" | "upload" | "delete"
+  #   group    Maven groupId ("com.example"), "" outside a versioned object
+  #   artifact Maven artifactId
+  #   version  Maven version, "" for maven-metadata.xml
+  #   snapshot true when the version is a -SNAPSHOT
+  #   path     full repository-relative path
+  rules:
+    # Only the project's own repo may publish, and only from release tags.
+    - name: publish-from-tags
+      action: [upload]
+      when: |
+        claims.repository == "example/myproject" &&
+        claims.sub.startsWith("repo:example/myproject:ref:refs/tags/v")
+    # CI jobs of the project (and its dependents) may download.
+    - name: ci-download
+      action: [download]
+      when: |
+        claims.repository in ["example/myproject", "example/consumer"]
+    # Staff tokens from the corporate IdP may download.
+    - name: staff-download
+      action: [download]
+      when: |
+        claims.iss == "https://id.example.com" &&
+        claims.sub in ["alice@example.com"]
