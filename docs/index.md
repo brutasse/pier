@@ -41,7 +41,11 @@ Behavior notes:
   return `416`.
 - `maven-metadata.xml` is stored exactly as the deploy client sends it
   (the Maven deploy plugin generates the full XML, including snapshot
-  versions). If it was never deployed, `GET` returns `404`.
+  versions). If it was never deployed: for a private GAV the
+  artifact-level document is synthesized from the stored versions
+  ([Pull-through cache](pull-through.md)); snapshot-level metadata is
+  never synthesized (`404` if absent). For a pull-through GAV the
+  upstream's document is fetched through the cache.
 - Checksum uploads are **verified against the stored base object**: a
   mismatch is rejected with `409` so a broken deploy cannot poison the
   repo. The base object must exist first.
