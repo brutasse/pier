@@ -33,12 +33,15 @@ func newUpstream(cfg *config.Config) *upstream.Upstream {
 }
 
 func main() {
-	cfgPath := flag.String("config", os.Getenv("PIER_CONFIG"), "path to the YAML config file")
+	cfgPath := flag.String("config", "", "path to the YAML config file (defaults to $PIER_CONFIG)")
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
 	if *showVersion {
 		fmt.Println("pier", version)
 		return
+	}
+	if *cfgPath == "" {
+		*cfgPath = os.Getenv("PIER_CONFIG")
 	}
 	if *cfgPath == "" {
 		fmt.Fprintln(os.Stderr, "usage: pier -config <file.yaml>")
@@ -83,6 +86,17 @@ func main() {
 		ReadHeaderTimeout: 30 * time.Second,
 	}
 
+	admins := adminServers(cfg.MetricsPort, cfg.PprofPort, srv)
+	for i := range admins {
+		a := &admins[i]
+		go func() {
+			if err := a.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Error("admin server", "port", a.Addr, "err", err)
+				os.Exit(1)
+			}
+		}()
+	}
+
 	go func() {
 		log.Info("listening",
 			"addr", cfg.Listen,
@@ -93,6 +107,8 @@ func main() {
 			"upstreams", len(cfg.Upstream),
 			"reserved_groups", len(cfg.ReservedGroups),
 			"metadata_ttl", cfg.MetadataTTLOrDefault().String(),
+			"metrics_port", cfg.MetricsPort,
+			"pprof_port", cfg.PprofPort,
 		)
 		if err := httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Error("server", "err", err)
@@ -127,6 +143,41 @@ func main() {
 	if err := httpSrv.Shutdown(shutdownCtx); err != nil {
 		log.Error("shutdown", "err", err)
 	}
+	for i := range admins {
+		if err := admins[i].Shutdown(shutdownCtx); err != nil {
+			log.Error("shutdown", "err", err)
+		}
+	}
+}
+
+// adminServers builds the opt-in admin servers: /metrics on
+// metricsPort, /debug/pprof/ on pprofPort. A port of zero disables its
+// endpoint; both endpoints on the same port share one server.
+func adminServers(metricsPort, pprofPort int, srv *api.Server) []http.Server {
+	type spec struct {
+		port int
+		h    http.Handler
+	}
+	var specs []spec
+	if metricsPort > 0 {
+		specs = append(specs, spec{metricsPort, srv.AdminHandler(true, false)})
+	}
+	if pprofPort > 0 {
+		if len(specs) == 1 && specs[0].port == pprofPort {
+			specs[0].h = srv.AdminHandler(true, true)
+		} else {
+			specs = append(specs, spec{pprofPort, srv.AdminHandler(false, true)})
+		}
+	}
+	srvs := make([]http.Server, 0, len(specs))
+	for _, sp := range specs {
+		srvs = append(srvs, http.Server{
+			Addr:              fmt.Sprintf(":%d", sp.port),
+			Handler:           sp.h,
+			ReadHeaderTimeout: 30 * time.Second,
+		})
+	}
+	return srvs
 }
 
 // reload loads and validates the config at path, checks the storage

@@ -1,5 +1,6 @@
 // Package api implements the HTTP surface of pier: the Maven
-// repository protocol plus /healthz and /metrics.
+// repository protocol plus /healthz, with /metrics and /debug/pprof/
+// exposed on opt-in admin ports.
 package api
 
 import (
@@ -160,28 +161,42 @@ func (s *Server) Update(cfg *config.Config, st store.Backend, v *auth.Verifier, 
 	s.rt.Store(&Runtime{Cfg: cfg, Store: st, Auth: v, Policy: p, Upstream: up})
 }
 
-// Handler returns the root HTTP handler.
+// Handler returns the root HTTP handler: the repository protocol and
+// /healthz. The /metrics and /debug/pprof/ endpoints are not served
+// here; they are exposed on separate admin ports via AdminHandler.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok\n"))
 	})
-	mux.Handle("GET /metrics", promhttp.HandlerFor(s.reg, promhttp.HandlerOpts{}))
-	mux.Handle("/debug/pprof/", pprofMux())
 	mux.HandleFunc("/{path...}", s.handleRepo)
+	return mux
+}
+
+// AdminHandler returns the handler for an admin port: /metrics when
+// enabled and /debug/pprof/ when enabled. These endpoints are not
+// served by the root Handler; at least one of the flags is true.
+func (s *Server) AdminHandler(metrics, pprof bool) http.Handler {
+	mux := http.NewServeMux()
+	if metrics {
+		mux.Handle("GET /metrics", promhttp.HandlerFor(s.reg, promhttp.HandlerOpts{}))
+	}
+	if pprof {
+		mux.Handle("/debug/pprof/", pprofMux())
+	}
 	return mux
 }
 
 // pprofMux serves the standard pprof endpoints under /debug/pprof/.
 func pprofMux() http.Handler {
 	m := http.NewServeMux()
-	m.HandleFunc("GET /", pprof.Index)
-	m.HandleFunc("GET /cmdline", pprof.Cmdline)
-	m.HandleFunc("GET /profile", pprof.Profile)
-	m.HandleFunc("GET /symbol", pprof.Symbol)
-	m.HandleFunc("GET /trace", pprof.Trace)
+	m.HandleFunc("GET /debug/pprof/", pprof.Index)
+	m.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
+	m.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
+	m.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
+	m.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
 	for _, name := range []string{"allocs", "block", "goroutine", "heap", "mutex", "sched", "threadcreate"} {
-		m.Handle("GET /"+name, pprof.Handler(name))
+		m.Handle("GET /debug/pprof/"+name, pprof.Handler(name))
 	}
 	return m
 }

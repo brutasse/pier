@@ -15,7 +15,13 @@ import (
 
 // Config is the pier configuration.
 type Config struct {
-	Listen            string   `yaml:"listen"`
+	Listen string `yaml:"listen"`
+	// MetricsPort is the port to serve /metrics on; 0 disables it.
+	// Fixed at startup: a reload cannot change it.
+	MetricsPort int `yaml:"metrics_port"`
+	// PprofPort is the port to serve /debug/pprof/ on; 0 disables it.
+	// Fixed at startup: a reload cannot change it.
+	PprofPort         int      `yaml:"pprof_port"`
 	S3                S3Config `yaml:"s3"`
 	ImmutableReleases *bool    `yaml:"immutable_releases"`
 	MaxUploadBytes    int64    `yaml:"max_upload_bytes"`
@@ -152,6 +158,12 @@ func (c *Config) validate() error {
 	}
 	if c.S3.Region == "" {
 		add("s3.region is required")
+	}
+	if c.MetricsPort < 0 || c.MetricsPort > 65535 {
+		add("metrics_port must be 0 (disabled) or a port in 1-65535")
+	}
+	if c.PprofPort < 0 || c.PprofPort > 65535 {
+		add("pprof_port must be 0 (disabled) or a port in 1-65535")
 	}
 	c.S3.Prefix = strings.Trim(c.S3.Prefix, "/")
 

@@ -350,15 +350,46 @@ func (te *testEnv) opsToken(t *testing.T) string {
 	return te.fi.token(t, map[string]any{"sub": "ops@example.test"})
 }
 
-func TestHealthzAndMetrics(t *testing.T) {
+func TestHealthzAndAdminEndpoints(t *testing.T) {
 	te := newTestEnv(t)
 	resp, body := te.do(t, http.MethodGet, "/healthz", "", "")
 	if resp.StatusCode != 200 || body != "ok\n" {
 		t.Fatalf("healthz: %d %q", resp.StatusCode, body)
 	}
-	resp, _ = te.do(t, http.MethodGet, "/metrics", "", "")
-	if resp.StatusCode != 200 {
-		t.Fatalf("metrics: %d", resp.StatusCode)
+
+	// The admin endpoints are not on the main listener.
+	for _, path := range []string{"/metrics", "/debug/pprof/cmdline"} {
+		resp, _ := te.do(t, http.MethodGet, path, "", "")
+		if resp.StatusCode == 200 {
+			t.Fatalf("%s served on the main listener", path)
+		}
+	}
+
+	// They are served by the dedicated handlers.
+	get := func(ts *httptest.Server, path string) (int, string) {
+		t.Helper()
+		resp, err := ts.Client().Get(ts.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		b, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, string(b)
+	}
+	mts := httptest.NewServer(te.srv.AdminHandler(true, false))
+	t.Cleanup(mts.Close)
+	code, body := get(mts, "/metrics")
+	if code != 200 {
+		t.Fatalf("metrics: %d", code)
+	}
+	if !strings.Contains(body, "pier_upload_bytes_total") {
+		t.Fatalf("metrics: body missing pier_ series:\n%s", body)
+	}
+	pts := httptest.NewServer(te.srv.AdminHandler(false, true))
+	t.Cleanup(pts.Close)
+	code, _ = get(pts, "/debug/pprof/cmdline")
+	if code != 200 {
+		t.Fatalf("pprof: %d", code)
 	}
 }
 

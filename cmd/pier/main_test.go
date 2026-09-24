@@ -81,6 +81,30 @@ func TestNewUpstream(t *testing.T) {
 	}
 }
 
+func TestAdminServers(t *testing.T) {
+	s3 := newFakeS3(t)
+	rule := "    - name: r1\n      action: [download]\n      when: claims.sub == \"ops\"\n"
+	path := writeCfg(t, cfgYAML(s3.URL, `"127.0.0.1:9"`, rule))
+	srv, _ := newServer(t, path)
+
+	// No flags: no admin servers.
+	if got := adminServers(0, 0, srv); len(got) != 0 {
+		t.Fatalf("no ports: %d servers, want 0", len(got))
+	}
+
+	// One port per endpoint.
+	got := adminServers(9090, 9091, srv)
+	if len(got) != 2 || got[0].Addr != ":9090" || got[1].Addr != ":9091" {
+		t.Fatalf("two ports: %+v", got)
+	}
+
+	// Same port: one shared server.
+	got = adminServers(9090, 9090, srv)
+	if len(got) != 1 || got[0].Addr != ":9090" {
+		t.Fatalf("same port: %+v", got)
+	}
+}
+
 func TestReload(t *testing.T) {
 	// store.Ping signs with the default credential chain; use dummies so the
 	// test does not depend on ambient AWS credentials.

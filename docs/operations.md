@@ -2,14 +2,18 @@
 
 ## Observability
 
-- `/healthz` — liveness.
-- `/metrics` — Prometheus: `pier_http_requests_total{method,status,action}`,
+- `/healthz` — liveness, on the main listener.
+- `/metrics` — Prometheus, on the port given by `metrics_port` in the
+  config (off unless set):
+  `pier_http_requests_total{method,status,action}`,
   `pier_http_request_duration_seconds`, `pier_auth_failures_total{reason}`,
   `pier_policy_denials_total{action}`, `pier_upload_bytes_total`,
   `pier_download_bytes_total`, `pier_upstream_fetches_total{repo,result}`
   (result: ok, not_found, error) and `pier_upstream_bytes_total{repo}`
   (successful pulls only).
-- `/debug/pprof/` — profiling.
+- `/debug/pprof/` — profiling, on the port given by `pprof_port` in the
+  config (off unless set). Both keys naming the same port share a
+  single server.
 - Structured JSON logs, one line per request (method, path, status,
   duration, matched rule, token `sub`). Tokens and full claims are never
   logged.

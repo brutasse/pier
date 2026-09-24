@@ -5,6 +5,8 @@ See [`configs/example.yaml`](https://github.com/brutasse/pier/blob/main/configs/
 | Key | Default | Notes |
 |-----|---------|-------|
 | `listen` | — | required, e.g. `":8080"` |
+| `metrics_port` | `0` | `/metrics` (Prometheus) port; `0` disables; restart-only |
+| `pprof_port` | `0` | `/debug/pprof/` port; `0` disables; restart-only |
 | `s3.bucket` | — | required |
 | `s3.prefix` | `""` | key prefix inside the bucket |
 | `s3.region` | — | required |
@@ -41,4 +43,6 @@ atomically. Requests in flight keep the configuration they started with.
 On failure the current configuration is kept and the error is logged.
 
 `listen` is the one exception: it cannot change on reload, and a file
-with a different listen address is rejected in full.
+with a different listen address is rejected in full. `metrics_port` and
+`pprof_port` are fixed at startup too: the admin servers are built once,
+so a reload that changes them takes no effect until a restart.

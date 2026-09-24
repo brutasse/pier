@@ -318,6 +318,70 @@ max_pull_bytes: 1048576
 	}
 }
 
+func TestLoadAdminPorts(t *testing.T) {
+	// Unset: both disabled.
+	c, err := Load(writeConfig(t, `
+listen: ":8080"
+s3:
+  bucket: b
+  region: r
+auth:
+  disabled: true
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.MetricsPort != 0 || c.PprofPort != 0 {
+		t.Fatalf("ports = %d, %d, want 0, 0", c.MetricsPort, c.PprofPort)
+	}
+
+	// Explicit values: honored.
+	c, err = Load(writeConfig(t, `
+listen: ":8080"
+s3:
+  bucket: b
+  region: r
+auth:
+  disabled: true
+metrics_port: 9090
+pprof_port: 9091
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.MetricsPort != 9090 || c.PprofPort != 9091 {
+		t.Fatalf("ports = %d, %d, want 9090, 9091", c.MetricsPort, c.PprofPort)
+	}
+
+	// Out of range: rejected.
+	for _, port := range []string{"metrics_port: -1", "metrics_port: 65536", "pprof_port: -1", "pprof_port: 65536"} {
+		if _, err := Load(writeConfig(t, `
+listen: ":8080"
+s3:
+  bucket: b
+  region: r
+auth:
+  disabled: true
+`+port+"\n")); err == nil {
+			t.Fatalf("expected error for %s", port)
+		}
+	}
+
+	// Boundaries: accepted.
+	for _, port := range []string{"metrics_port: 65535", "pprof_port: 1"} {
+		if _, err := Load(writeConfig(t, `
+listen: ":8080"
+s3:
+  bucket: b
+  region: r
+auth:
+  disabled: true
+`+port+"\n")); err != nil {
+			t.Fatalf("%s: %v", port, err)
+		}
+	}
+}
+
 func TestIsReserved(t *testing.T) {
 	c := &Config{ReservedGroups: []string{"org.acme"}}
 	cases := map[string]bool{

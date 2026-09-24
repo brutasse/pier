@@ -5,6 +5,12 @@
 # instance profile).
 listen: ":8080"
 
+# Port to serve /metrics (Prometheus) on. 0 or unset disables it.
+# Like listen, it can only change on restart, not on reload.
+# metrics_port: 9090
+# Port to serve /debug/pprof/ on. 0 or unset disables it.
+# pprof_port: 9091
+
 s3:
   bucket: pier-mycorp
   # All repository objects live under this prefix in the bucket.
