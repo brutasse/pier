@@ -17,12 +17,12 @@ storage. One Go binary, no database, no user accounts.
 - **Stateless**: all state lives in S3; the binary hot-reloads its
   configuration on `SIGHUP`.
 
-```
- GitHub Actions ──OIDC token──┐
-                              ├─→ pier ────────────────→ S3-compatible
- IdP (SSO, ...) ──OIDC token──┘      │                   object storage
-                                    ▼
-                               CEL policy (per request)
+```mermaid
+flowchart LR
+  GHA["GitHub Actions"] -- "OIDC token" --> P[pier]
+  IdP["IdP (SSO, ...)"] -- "OIDC token" --> P
+  P --> S3[("S3-compatible object storage")]
+  P -- "per request" --> CEL["CEL policy"]
 ```
 
 ## Documentation

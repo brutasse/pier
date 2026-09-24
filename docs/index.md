@@ -12,12 +12,12 @@ storage, fitting in one stateless Go binary.
   action (`download` / `upload` / `delete`) — the token source does not
   decide, the rules do.
 
-```
- GitHub Actions ──OIDC token──┐
-                              ├─→ Pier ────────────────→ S3-compatible
- IdP (SSO, ...) ──OIDC token──┘      │                   object storage
-                                     ▼
-                               CEL policy (per request)
+```mermaid
+flowchart LR
+  GHA["GitHub Actions"] -- "OIDC token" --> P[Pier]
+  IdP["IdP (SSO, ...)"] -- "OIDC token" --> P
+  P --> S3[("S3-compatible object storage")]
+  P -- "per request" --> CEL["CEL policy"]
 ```
 
 ## Maven protocol
