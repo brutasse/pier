@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,6 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/spf13/cobra"
 
 	"github.com/brutasse/pier/internal/api"
 	"github.com/brutasse/pier/internal/auth"
@@ -23,35 +24,47 @@ import (
 // version is set at build time: -ldflags "-X main.version=<tag>".
 var version = "dev"
 
-// newUpstream builds the pull-through fetcher, or nil when no upstream
-// repositories are configured (pull-through off).
-func newUpstream(cfg *config.Config) *upstream.Upstream {
-	if len(cfg.Upstream) == 0 {
-		return nil
-	}
-	return upstream.New(cfg.Upstream, cfg.MaxPullBytes)
+var rootCmd = &cobra.Command{
+	Use:           "pier",
+	Short:         "A private, stateless Maven repository on top of S3-compatible object storage",
+	Version:       version,
+	SilenceErrors: true,
+	SilenceUsage:  true,
+}
+
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Run the repository server",
+	RunE:  serve,
+}
+
+func init() {
+	// Keep the pre-cobra output: "pier <version>".
+	rootCmd.SetVersionTemplate("pier {{.Version}}\n")
+	serveCmd.Flags().String("config", "", "path to the YAML config file (defaults to $PIER_CONFIG)")
+	rootCmd.AddCommand(serveCmd)
 }
 
 func main() {
-	cfgPath := flag.String("config", "", "path to the YAML config file (defaults to $PIER_CONFIG)")
-	showVersion := flag.Bool("version", false, "print the version and exit")
-	flag.Parse()
-	if *showVersion {
-		fmt.Println("pier", version)
-		return
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
 	}
-	if *cfgPath == "" {
-		*cfgPath = os.Getenv("PIER_CONFIG")
+}
+
+func serve(cmd *cobra.Command, _ []string) error {
+	cfgPath, _ := cmd.Flags().GetString("config")
+	if cfgPath == "" {
+		cfgPath = os.Getenv("PIER_CONFIG")
 	}
-	if *cfgPath == "" {
-		fmt.Fprintln(os.Stderr, "usage: pier -config <file.yaml>")
+	if cfgPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: pier serve -config <file.yaml>")
 		os.Exit(2)
 	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(log)
 
-	cfg, err := config.Load(*cfgPath)
+	cfg, err := config.Load(cfgPath)
 	if err != nil {
 		log.Error("config", "err", err)
 		os.Exit(1)
@@ -118,7 +131,7 @@ func main() {
 
 	go func() {
 		for range hup {
-			newCfg, err := reload(*cfgPath, cfg.Listen, srv)
+			newCfg, err := reload(cfgPath, cfg.Listen, srv)
 			if err != nil {
 				log.Error("config reload failed, keeping current configuration", "err", err)
 				continue
@@ -148,6 +161,16 @@ func main() {
 			log.Error("shutdown", "err", err)
 		}
 	}
+	return nil
+}
+
+// newUpstream builds the pull-through fetcher, or nil when no upstream
+// repositories are configured (pull-through off).
+func newUpstream(cfg *config.Config) *upstream.Upstream {
+	if len(cfg.Upstream) == 0 {
+		return nil
+	}
+	return upstream.New(cfg.Upstream, cfg.MaxPullBytes)
 }
 
 // adminServers builds the opt-in admin servers: /metrics on

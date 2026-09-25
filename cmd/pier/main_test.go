@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"log/slog"
@@ -151,5 +152,39 @@ func TestReload(t *testing.T) {
 	}
 	if _, err := reload(path, listen, srv); err == nil {
 		t.Fatal("missing file: want error, got nil")
+	}
+}
+
+func TestVersionOutput(t *testing.T) {
+	var out bytes.Buffer
+	rootCmd.SetOut(&out)
+	rootCmd.SetErr(&out)
+	rootCmd.SetArgs([]string{"--version"})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("execute --version: %v", err)
+	}
+	if got := out.String(); got != "pier dev\n" {
+		t.Fatalf("version output = %q, want %q", got, "pier dev\n")
+	}
+	// The version flag is parsed on the shared rootCmd; reset it so later
+	// tests do not inherit the parsed value.
+	if err := rootCmd.Flags().Set("version", "false"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestBareRootShowsHelp(t *testing.T) {
+	var out bytes.Buffer
+	rootCmd.SetOut(&out)
+	rootCmd.SetErr(&out)
+	rootCmd.SetArgs(nil)
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	if !strings.Contains(out.String(), "serve") {
+		t.Fatalf("help does not list serve:\n%s", out.String())
+	}
+	if f := serveCmd.Flags().Lookup("config"); f == nil {
+		t.Fatal("serve has no -config flag")
 	}
 }

@@ -12,7 +12,7 @@ build:
 	go build -trimpath -o bin/pier ./cmd/pier
 
 run: build
-	./bin/pier -config $(CONFIG)
+	./bin/pier serve -config $(CONFIG)
 
 fmt:
 	gofmt -w .
