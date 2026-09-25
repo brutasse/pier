@@ -13,4 +13,4 @@ COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certifica
 COPY --from=build /out/pier /pier
 EXPOSE 8080
 ENTRYPOINT ["/pier"]
-CMD ["-config", "/config/pier.yaml"]
+CMD ["serve", "-config", "/config/pier.yaml"]

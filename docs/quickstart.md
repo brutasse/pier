@@ -17,7 +17,7 @@ Fetch a config, edit it, and run it:
 ```sh
 curl -fsSL https://raw.githubusercontent.com/brutasse/pier/main/configs/example.yaml -o pier.yaml
 # edit pier.yaml, then:
-pier -config pier.yaml
+pier serve -config pier.yaml
 ```
 
 Observability endpoints are opt-in: set `metrics_port: 9090` for
