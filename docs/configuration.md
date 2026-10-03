@@ -27,22 +27,23 @@ See [`configs/example.yaml`](https://github.com/brutasse/pier/blob/main/configs/
 | `policy.default_deny` | `true` | |
 | `policy.rules[]` | — | see [Writing policy rules](policies.md) |
 
-TLS is expected at the edge (load balancer / reverse proxy); the service
-listens on plain HTTP. JWKS and issuer metadata are fetched over HTTPS
-from each configured issuer and cached for an hour (refreshed on unknown
-`kid`, rate-limited).
+You terminate TLS at the edge (load balancer / reverse proxy); the
+service listens on plain HTTP. Pier fetches JWKS and issuer metadata
+over HTTPS from each configured issuer and caches them for an hour.
+Pier refreshes the cache on an unknown `kid`, with rate limiting.
 
 ## Configuration reload (SIGHUP)
 
 `kill -HUP <pid>` reloads `policy.rules`, `auth`, `s3`,
 `immutable_releases`, `max_upload_bytes`, `max_pull_bytes`,
-`upstream`, `reserved_groups` and `metadata_ttl` without a restart. The new
-file is fully validated first (YAML, CEL compilation, and a storage
-liveness check against the configured bucket); only then is it activated
+`upstream`, `reserved_groups` and `metadata_ttl` without a restart. Pier
+first validates the new file fully (YAML, CEL compilation, and a storage
+liveness check against the configured bucket), then activates it
 atomically. Requests in flight keep the configuration they started with.
-On failure the current configuration is kept and the error is logged.
+On failure Pier keeps the current configuration and logs the error.
 
-`listen` is the one exception: it cannot change on reload, and a file
-with a different listen address is rejected in full. `metrics_port` and
-`pprof_port` are fixed at startup too: the admin servers are built once,
-so a reload that changes them takes no effect until a restart.
+`listen` is the one exception: it cannot change on reload, and Pier
+rejects a file with a different listen address in full. `metrics_port`
+and `pprof_port` also cannot change on reload. Pier builds the admin
+servers once at startup, so a reload that changes them has no effect
+until a restart.

@@ -12,10 +12,10 @@ mvn -Dmaven.resolver.transport=wagon \
     dependency:get -Dartifact=com.example:myapp:1.2.3 -s settings.xml
 ```
 
-The wagon flag can be set globally instead — see
+You can set the wagon flag globally instead — see
 [Enabling the wagon transport globally](publishing.md#enabling-the-wagon-transport-globally).
 
-The matching rule (CI jobs of the project or its dependents may read):
+The matching rule (CI jobs of the project or its dependents can read):
 
 ```yaml
 - name: ci-download

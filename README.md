@@ -3,17 +3,19 @@
 A private, stateless Maven repository on top of S3-compatible object
 storage. One Go binary, no database, no user accounts.
 
-- **Every request** is authorized by an OIDC token, verified against the
-  configured issuers — no deploy tokens, no shared secrets. GitHub
-  Actions OIDC (trusted publishing) is one example of a source; so is
-  any IdP you configure (Exoscale SSO, Keycloak, ...).
-- Authorization is a list of **CEL rules** evaluated per request against
-  the verified token claims, the Maven coordinates of the path, and the
-  action (`download` / `upload` / `delete`) — the token source does not
-  decide, the rules do.
-- Optional **pull-through cache**: public or basic-authenticated
-  upstreams (Maven Central, Clojars, ...) are cached on demand, with
-  metadata TTL revalidation and metadata synthesis for private groups.
+- **Every request** carries an OIDC token. Pier authorizes the request
+  only after it verifies the token against the configured issuers — no
+  deploy tokens, no shared secrets. GitHub Actions OIDC (trusted
+  publishing) is one example of a source; so is any IdP you configure
+  (Authentik, Keycloak, ...).
+- Authorization uses a list of **CEL rules**. Pier evaluates the rules
+  per request against the verified token claims, the Maven coordinates
+  of the path, and the action (`download` / `upload` / `delete`). The
+  token source does not decide; the rules do.
+- Optional **pull-through cache**: Pier caches public or
+  basic-authenticated upstreams (Maven Central, Clojars, ...) on
+  demand, revalidates metadata with a TTL, and synthesizes metadata for
+  private groups.
 - **Stateless**: all state lives in S3; the binary hot-reloads its
   configuration on `SIGHUP`.
 
@@ -58,8 +60,8 @@ Observability endpoints are opt-in: set `metrics_port: 9090` for
 Prometheus and/or `pprof_port: 9091` for profiling in the config
 ([operations](https://brutasse.github.io/pier/operations/)).
 
-The config path may also come from the `PIER_CONFIG` environment
-variable when `-config` is not given.
+Pier also reads the config path from the `PIER_CONFIG` environment
+variable when you omit `-config`.
 
 ```sh
 docker run -p 8080:8080 -v $(pwd)/pier.yaml:/config/pier.yaml ghcr.io/brutasse/pier:v0.1.0

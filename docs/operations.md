@@ -15,8 +15,8 @@
   config (off unless set). Both keys naming the same port share a
   single server.
 - Structured JSON logs, one line per request (method, path, status,
-  duration, matched rule, token `sub`). Tokens and full claims are never
-  logged.
+  duration, matched rule, token `sub`). Pier never logs tokens or full
+  claims.
 
 ## Security notes
 
@@ -26,6 +26,6 @@
 - Fail-closed: any verification or policy error denies the request.
 - Checksum verification on upload and immutable releases protect the
   repository from broken or malicious re-deploys.
-- Replay is not mitigated with nonces (stateless); the exposure window is
-  the token lifetime, and the only effect a token can have is what the
-  policy already allows for that token.
+- Pier does not mitigate replay with nonces (stateless). The exposure
+  window is the token lifetime, and a token can only do what the policy
+  already allows for that token.

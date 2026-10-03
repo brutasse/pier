@@ -24,8 +24,8 @@ Observability endpoints are opt-in: set `metrics_port: 9090` for
 Prometheus and/or `pprof_port: 9091` for profiling in the config
 ([operations](operations.md)).
 
-The config path may also come from the `PIER_CONFIG` environment
-variable when `-config` is not given.
+Pier also reads the config path from the `PIER_CONFIG` environment
+variable when you omit `-config`.
 
 ```sh
 docker run -p 8080:8080 -v $(pwd)/pier.yaml:/config/pier.yaml ghcr.io/brutasse/pier:v0.1.0

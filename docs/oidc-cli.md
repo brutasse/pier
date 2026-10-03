@@ -5,8 +5,8 @@ line tool for working with OIDC tokens. Use it to negotiate a token with
 your IdP, on the user's behalf, for use against Pier.
 
 It implements the authorization code flow with PKCE: a local `localhost`
-server receives the browser callback, and the access token plus a
-refresh token are cached on disk for reuse.
+server receives the browser callback, and oidc-cli caches the access
+token plus a refresh token on disk for reuse.
 
 ## Installation
 
@@ -28,7 +28,7 @@ the interactive login in your default browser:
 oidc create public pier --issuer https://id.example.com --client-id pier
 ```
 
-The client (name `pier`) and the negotiated tokens are stored in
+oidc-cli stores the client (name `pier`) and the negotiated tokens in
 `~/.config/oidc/config.yaml` (mode 0600); override the path with
 `-c file` or `OIDC_CONFIG`.
 
@@ -67,24 +67,24 @@ mvn -Dmaven.resolver.transport=wagon dependency:get \
 ```
 
 A long build cannot refresh a token mid-run: if the access token expires
-while Maven is running, the remaining transfers fail with 401 — refresh
+while Maven runs, the remaining transfers fail with 401 — refresh
 with `oidc token pier -f` and re-run the goal.
 
 ## IdP notes
 
-- The token's `aud` claim is decided by the IdP — oidc-cli has no
-  audience option. It must be one of Pier's
+- The IdP decides the token's `aud` claim — oidc-cli has no audience
+  option. It must be one of Pier's
   `auth.issuers[].audiences`:
   - Dex: `aud` is the client's `id`, so register the client as `pier`.
   - Keycloak: a public client with PKCE enabled, plus an audience mapper
     adding `pier`.
 
-  Tokens are cached as issued, without local verification: a wrong
-  audience is noticed as Pier's 401 `audience mismatch`, not earlier.
+  oidc-cli caches tokens as issued, without local verification: you
+  notice a wrong audience only as Pier's 401 `audience mismatch`.
 - If the IdP requires a pre-registered redirect URI (Keycloak, Okta,
   Auth0, ...), pin the callback port (`--port 8080`) and register
   `http://localhost:8080` byte for byte. If the callback never arrives,
-  the browser may resolve `localhost` to a different loopback address
+  the browser can resolve `localhost` to a different loopback address
   than the one the local server bound to — force one side with
   `--bind only4` / `--bind only6`.
 - Headless machines: there is no device flow. Log in on a machine with a
@@ -96,6 +96,6 @@ with `oidc token pier -f` and re-run the goal.
     --client-id pier --refresh-token <refresh-token>
   ```
 
-- The cached access token is reused until expiry, then refreshed
+- oidc-cli reuses the cached access token until expiry and refreshes it
   automatically. When the refresh token has expired (or is missing),
   re-login with `oidc create public pier --force …`.

@@ -27,14 +27,14 @@ PIER_TEST_S3_BUCKET=pier-integration \
   writes. It does serialize its own read-modify-write — artifact `PUT`
   + metadata invalidation, metadata synthesis, and plugin metadata
   `PUT`s — per GAV under an in-process lock, relying on S3's consistent
-  read-after-write. Metadata written directly to S3 (bypassing Pier)
-  is not tracked — only Pier-mediated `PUT`s trigger the synthesis
+  read-after-write. Pier does not track metadata written directly to S3
+  (bypassing Pier) — only Pier-mediated `PUT`s trigger the synthesis
   invalidation.
 - **In-process per-GAV serialization, no cross-instance coordination.**
-  The per-GAV locks are process-local: simple, at the cost that with
-  multiple replicas, concurrent operations on the same GAV are not
-  serialized across instances — a bounded stale-document window,
-  healed by the next artifact `PUT` for the GAV.
+  The per-GAV locks are process-local: simple, at a cost. With multiple
+  replicas, Pier does not serialize concurrent operations on the same
+  GAV across instances. The next artifact `PUT` for the GAV heals a
+  bounded stale-document window.
 - **Single repository root.** One flat repository per instance; the
   namespace is the group id, with `reserved_groups` splitting internal
   uploads from the pull-through cache. No named repositories.
