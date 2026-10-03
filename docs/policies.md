@@ -1,8 +1,8 @@
 # Writing policy rules
 
 `policy.rules` is an ordered list; the **first rule whose `when`
-expression is true** allows the request, otherwise it is denied
-(`default_deny: true`, the default). A rule that cannot be evaluated for
+expression is true** allows the request, otherwise Pier denies it
+(`default_deny: true`, the default). A rule Pier cannot evaluate for
 this token (a claim it references does not exist) simply does not match.
 
 Variables available in expressions:

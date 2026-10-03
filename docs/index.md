@@ -3,14 +3,15 @@
 A private Maven repository on top of S3-compatible object
 storage, fitting in one stateless Go binary.
 
-- **Every request** is authorized by an OIDC token, verified against the
-  configured issuers — without any tokens or shared secrets. GitHub
+- **Every request** carries an OIDC token. Pier authorizes the request
+  only after it verifies the token against the configured issuers — no
+  deploy tokens, no shared secrets. GitHub
   Actions OIDC (trusted publishing) is one example of a source; so is
   any IdP you configure (Authentik, Keycloak, ...).
-- Authorization is a list of **CEL rules** evaluated per request against
-  the verified token claims, the Maven coordinates of the path, and the
-  action (`download` / `upload` / `delete`) — the token source does not
-  decide, the rules do.
+- Authorization uses a list of **CEL rules**. Pier evaluates the rules
+  per request against the verified token claims, the Maven coordinates
+  of the path, and the action (`download` / `upload` / `delete`). The
+  token source does not decide; the rules do.
 
 ```mermaid
 flowchart LR
@@ -35,23 +36,23 @@ The service speaks the plain-HTTP Maven repository layout:
 
 Behavior notes:
 
-- Downloads support HTTP byte ranges (`Range: bytes=...`): satisfiable
-  ranges return `206 Partial Content` with `Content-Range`, so large
-  artifacts can be fetched partially or resumed; unsatisfiable ranges
-  return `416`.
-- `maven-metadata.xml` is stored exactly as the deploy client sends it
+- Downloads support HTTP byte ranges (`Range: bytes=...`). Satisfiable
+  ranges return `206 Partial Content` with `Content-Range`, so a client
+  can fetch large artifacts partially or resume an interrupted download;
+  unsatisfiable ranges return `416`.
+- Pier stores `maven-metadata.xml` exactly as the deploy client sends it
   (the Maven deploy plugin generates the full XML, including snapshot
-  versions). If it was never deployed: for a private GAV the
-  artifact-level document is synthesized from the stored versions
-  ([Pull-through cache](pull-through.md)); snapshot-level metadata is
-  never synthesized (`404` if absent). For a pull-through GAV the
-  upstream's document is fetched through the cache.
-- Checksum uploads are **verified against the stored base object**: a
-  mismatch is rejected with `409` so a broken deploy cannot poison the
+  versions). If it is missing: for a private GAV, Pier synthesizes the
+  artifact-level document from the stored versions
+  ([Pull-through cache](pull-through.md)); Pier never synthesizes
+  snapshot-level metadata (`404` if absent). For a pull-through GAV,
+  Pier fetches the upstream's document through the cache.
+- Pier **verifies checksum uploads against the stored base object**: it
+  rejects a mismatch with `409`, so a broken deploy cannot poison the
   repo. The base object must exist first.
 - Non-SNAPSHOT objects are **immutable** by default (`immutable_releases:
   true`): re-uploading a published GAV (`groupId:artifactId:version`)
-  returns `409`. Snapshots and `maven-metadata.xml` can be re-uploaded.
-- `401` = missing/invalid token (the body states the reason, e.g.
+  returns `409`. You can re-upload snapshots and `maven-metadata.xml`.
+- `401` = missing/invalid token (the body states the reason, for example
   `audience mismatch`, `token expired`, `JWKS unavailable`); `403` =
   valid token, no rule allows the action.

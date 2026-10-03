@@ -1,7 +1,8 @@
 # Publishing from GitHub Actions
 
 Trusted publishing: the job presents its own OIDC token, and the policy
-binds the `repository` (and ref) claims to what may be published.
+binds the `repository` (and ref) claims to decide what a job can
+publish.
 
 Workflow:
 
@@ -76,8 +77,8 @@ options:
    project (it also POSTs `maven-metadata.xml`).
 
 2. **curl** — for scripts that already produce the files, `PUT` the jar,
-   pom and checksums and `POST` the metadata; the deploy plugin is just
-   doing that.
+   pom and checksums and `POST` the metadata; the deploy plugin just
+   does that.
 
 ## Enabling the wagon transport globally
 
@@ -88,12 +89,12 @@ reaches pier and requests fail with 401. Instead of
 once:
 
 1. **In the settings file** (recommended — it travels with the
-   `httpHeaders` it enables). Put it in a profile that is activated
+   `httpHeaders` it enables). Put it in a profile that you activate
    *explicitly*: in the same file's `<activeProfiles>`, or with `-P`
-   on the command line. Conditionally-activated profiles
-   (`<activation>`, `<activeByDefault>`) are not considered — the
-   resolver session, and with it the transport, is built before
-   profile activation is evaluated:
+   on the command line. Maven does not consider
+   conditionally-activated profiles (`<activation>`,
+   `<activeByDefault>`) — Maven builds the resolver session, and with
+   it the transport, before it evaluates profile activation:
 
    ```xml
    <profile>
