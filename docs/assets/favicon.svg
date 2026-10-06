@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- pier favicon (LIGHT-BACKGROUND version): buoy only, no sea.
+       Navy stripes. For dark pages use pier-favicon-dark.svg. -->
+  <defs>
+    <clipPath id="buoy-body">
+      <rect x="21" y="19" width="22" height="26" rx="9"/>
+    </clipPath>
+  </defs>
+  <circle cx="32" cy="11" r="4.5" fill="none" stroke="#E9A13B" stroke-width="3.5"/>
+  <g clip-path="url(#buoy-body)">
+    <rect x="21" y="19" width="22" height="26" fill="#123047"/>
+    <rect x="21" y="25.5" width="22" height="6.5" fill="#E9A13B"/>
+    <rect x="21" y="38.5" width="22" height="6.5" fill="#E9A13B"/>
+  </g>
+</svg>

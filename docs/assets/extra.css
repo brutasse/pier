@@ -1,0 +1,77 @@
+/* Let the pier wordmark breathe: default 1.2rem is tuned for square
+   icons; at its 1.84:1 aspect the logotype would render ~35px wide. */
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.8rem;
+}
+
+/* The logotype's ink is navy — swap to the cream variant on slate. */
+[data-md-color-scheme="slate"] .md-header__button.md-logo img {
+  content: url("logo-dark.svg");
+}
+
+/* pier palette (see logo/preview.html):
+   navy #123047 ink · teal #2F7E8C water · amber #E9A13B · cream #F7F1E5 */
+
+/* Light scheme: the preview page itself — pale page, navy ink, white
+   surfaces, teal links, amber on hover. */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #123047;
+  --md-primary-fg-color--light: #2f7e8c;
+  --md-primary-fg-color--dark: #0b2233;
+  --md-primary-bg-color: #f7f1e5;
+  --md-primary-bg-color--light: rgba(247, 241, 229, 0.7);
+  --md-accent-fg-color: #9c6412; /* amber deepened to #b9791f's AA-safe
+                       cousin for text on white (4.95:1) */
+  --md-accent-fg-color--transparent: rgba(233, 161, 59, 0.1);
+  --md-typeset-a-color: #2b7482; /* preview teal deepened a notch: AA on
+                       the #eef2f4 page (4.75:1), same hue family */
+
+  --md-default-fg-color: #123047;
+  --md-default-fg-color--light: #44607a;
+  --md-default-fg-color--lighter: rgba(18, 48, 71, 0.5);
+  --md-default-fg-color--lightest: rgba(18, 48, 71, 0.1);
+  --md-default-bg-color: #eef2f4;
+  --md-default-bg-color--light: rgba(255, 255, 255, 0.8);
+  --md-default-bg-color--lighter: rgba(255, 255, 255, 0.4);
+  --md-default-bg-color--lightest: rgba(255, 255, 255, 0.1);
+
+  --md-code-bg-color: #ffffff;
+  --md-code-fg-color: #123047;
+  --md-code-hl-color: rgba(233, 161, 59, 0.15);
+  --md-code-hl-number-color: #b9791f;
+
+  --md-footer-bg-color: #123047;
+  --md-footer-bg-color--dark: #0b2233;
+  --md-typeset-mark-color: #9c6412;
+}
+
+/* Slate scheme: the preview's dark tile — navy page, cream ink, sky
+   links (the dark-mode mark's blue), amber accent. */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #0b2233;
+  --md-primary-fg-color--light: #2f7e8c;
+  --md-primary-fg-color--dark: #071726;
+  --md-primary-bg-color: #f7f1e5;
+  --md-primary-bg-color--light: rgba(247, 241, 229, 0.7);
+  --md-accent-fg-color: #e9a13b;
+  --md-accent-fg-color--transparent: rgba(233, 161, 59, 0.15);
+  --md-typeset-a-color: #8fc1e9;
+
+  --md-default-fg-color: #f7f1e5;
+  --md-default-fg-color--light: #b9c8d4;
+  --md-default-fg-color--lighter: rgba(247, 241, 229, 0.55);
+  --md-default-fg-color--lightest: rgba(247, 241, 229, 0.15);
+  --md-default-bg-color: #123047;
+  --md-default-bg-color--light: rgba(247, 241, 229, 0.08);
+  --md-default-bg-color--lighter: rgba(247, 241, 229, 0.04);
+  --md-default-bg-color--lightest: rgba(247, 241, 229, 0.02);
+
+  --md-code-bg-color: #0b2233;
+  --md-code-fg-color: #f7f1e5;
+  --md-code-hl-color: rgba(233, 161, 59, 0.2);
+
+  --md-footer-bg-color: #0b2233;
+  --md-footer-bg-color--dark: #071726;
+  --md-typeset-mark-color: #e9a13b;
+}

@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="logo/pier-logotype-dark.svg">
+    <img src="logo/pier-logotype.svg" alt="pier" width="320">
+  </picture>
+</p>
+
 # Pier
 
 A private, stateless Maven repository on top of S3-compatible object
