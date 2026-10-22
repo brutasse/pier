@@ -3,13 +3,13 @@
 Install the binary (Linux x86_64/arm64; always the latest release):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/brutasse/pier/v0.1.0/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/brutasse/pier/v0.1.1/install.sh | sh
 ```
 
 Or pull the Docker image (multi-arch; always the latest release):
 
 ```sh
-docker pull ghcr.io/brutasse/pier:v0.1.0
+docker pull ghcr.io/brutasse/pier:v0.1.1
 ```
 
 Fetch a config, edit it, and run it:
@@ -28,7 +28,7 @@ Pier also reads the config path from the `PIER_CONFIG` environment
 variable when you omit `-config`.
 
 ```sh
-docker run -p 8080:8080 -v $(pwd)/pier.yaml:/config/pier.yaml ghcr.io/brutasse/pier:v0.1.0
+docker run -p 8080:8080 -v $(pwd)/pier.yaml:/config/pier.yaml ghcr.io/brutasse/pier:v0.1.1
 ```
 
 S3 credentials are never in the config file: the standard AWS SDK
