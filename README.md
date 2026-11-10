@@ -60,7 +60,7 @@ Fetch a config, edit it, and run it:
 ```sh
 curl -fsSL https://raw.githubusercontent.com/brutasse/pier/main/configs/example.yaml -o pier.yaml
 # edit pier.yaml, then:
-pier serve -config pier.yaml
+pier serve --config pier.yaml
 ```
 
 Observability endpoints are opt-in: set `metrics_port: 9090` for
@@ -68,7 +68,7 @@ Prometheus and/or `pprof_port: 9091` for profiling in the config
 ([operations](https://brutasse.github.io/pier/operations/)).
 
 Pier also reads the config path from the `PIER_CONFIG` environment
-variable when you omit `-config`.
+variable when you omit `--config`.
 
 ```sh
 docker run -p 8080:8080 -v $(pwd)/pier.yaml:/config/pier.yaml ghcr.io/brutasse/pier:v0.1.1

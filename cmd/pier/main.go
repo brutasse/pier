@@ -57,7 +57,7 @@ func serve(cmd *cobra.Command, _ []string) error {
 		cfgPath = os.Getenv("PIER_CONFIG")
 	}
 	if cfgPath == "" {
-		fmt.Fprintln(os.Stderr, "usage: pier serve -config <file.yaml>")
+		fmt.Fprintln(os.Stderr, "usage: pier serve --config <file.yaml>")
 		os.Exit(2)
 	}
 

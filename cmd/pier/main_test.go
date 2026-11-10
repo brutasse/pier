@@ -185,6 +185,6 @@ func TestBareRootShowsHelp(t *testing.T) {
 		t.Fatalf("help does not list serve:\n%s", out.String())
 	}
 	if f := serveCmd.Flags().Lookup("config"); f == nil {
-		t.Fatal("serve has no -config flag")
+		t.Fatal("serve has no --config flag")
 	}
 }
