@@ -17,7 +17,7 @@ s3:
 auth:
   issuers:
     - name: github
-      well_known: https://actions.githubusercontent.com/.well-known/openid-configuration
+      well_known: https://token.actions.githubusercontent.com/.well-known/openid-configuration
       expected_iss: https://token.actions.githubusercontent.com
       audiences:
         - https://maven.example.com
@@ -70,7 +70,7 @@ func TestLoadErrors(t *testing.T) {
 		"no listen":  strings.Replace(valid, "listen: \":8080\"", "listen: \"\"", 1),
 		"no bucket":  strings.Replace(valid, "bucket: my-bucket", "bucket: \"\"", 1),
 		"no region":  "listen: \":8080\"\ns3:\n  bucket: b\nauth:\n  issuers:\n    - name: i\n      well_known: https://x.example/well-known\n      expected_iss: https://x.example\n      audiences: [a]\n",
-		"bad issuer": strings.Replace(valid, "well_known: https://actions.githubusercontent.com/.well-known/openid-configuration", "well_known: not-a-url", 1),
+		"bad issuer": strings.Replace(valid, "well_known: https://token.actions.githubusercontent.com/.well-known/openid-configuration", "well_known: not-a-url", 1),
 		"no audiences": `
 listen: ":8080"
 s3:

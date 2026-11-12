@@ -69,7 +69,7 @@ auth:
   issuers:
     # GitHub Actions OIDC tokens (trusted publishing).
     - name: github
-      well_known: https://actions.githubusercontent.com/.well-known/openid-configuration
+      well_known: https://token.actions.githubusercontent.com/.well-known/openid-configuration
       expected_iss: https://token.actions.githubusercontent.com
       # Workflows must request this audience:
       #   curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
